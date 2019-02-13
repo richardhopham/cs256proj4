@@ -1,8 +1,4 @@
 # cs256proj4
-Richard Pham
-CS256-01, Fall 2017
-Project #4
-Description:
 Continue from Project 3. Convert the existing Book class into an abstract base class with a
 public pure virtual method that returns a string for the cover type. Define two concrete derived
 classes from the Book class, which both implement the 'getCoverType' method from the base class.
