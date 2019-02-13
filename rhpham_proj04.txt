@@ -1,0 +1,791 @@
+Script started on Mon 27 Nov 2017 11:53:28 PM PST
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat Book.h 
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#ifndef BOOK
+#define BOOK
+
+#include <string>
+#include <iomanip>
+#include <fstream>
+
+using namespace std;
+
+//a class named Book
+class Book {
+    //overloaded stream insertion operator to retrieve its attributes from the provided database
+	friend istream& operator >> (istream&, Book&);
+
+	//overloaded stream extraction operator to output the values of the data members
+	friend ostream& operator << (ostream&, const Book&);
+
+	public:
+		static const int MAX_AUTHORS = 20; //max number of authors
+
+		Book();     //default constructor
+		virtual ~Book();    //destructor
+
+		string getPublisher() const;                //get Publisher
+		string getISBN() const;                     //get ISBN
+		bool getHardcover() const;			//get hardCover
+		bool operator== (const Book&) const;        //overloaded equality operator to check if two books are equal
+		Book* operator= (const Book&);               //overloaded assignment operator to set a book equal to another
+		bool operator> (const Book&) const;         //overloaded greater than operator to compare two Book objects
+
+		virtual string getCoverType() const = 0;	//get Cover Type
+
+	private:
+		string title_;                          //title of the book
+		string authors_[Book::MAX_AUTHORS];     //an array of string, representing authors of the book
+		short authorCount_;                     //number of authors
+		string publisher_;                      //name of publisher
+		short yearPublish_;                     //year book was published
+		bool hardCover_;                        //true if book is hard cover, false if paperback
+		float price_;                           //price of the book
+		string isbn_;                           //isbn number/code
+		long copies_;                           //number of copies in the warehouse
+};
+
+#endif /** BOOK **/
+
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat Book.cpp
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#include "Book.h"
+#include <iostream>
+
+Book::Book() {
+
+}
+
+Book:: ~Book() {
+
+}
+
+
+istream& operator>> (istream& input, Book& book) {
+    string line;
+    getline(input, book.title_);
+
+    input >> book.authorCount_;
+    getline(input, line);
+
+	for(int i = 0; i < book.authorCount_; i++ ) {
+        getline(input, book.authors_[i]);
+	}
+
+    getline(input, book.publisher_);
+    input >> book.yearPublish_;
+
+	int hardback;
+	input >> hardback;
+	if(hardback == 1)
+		book.hardCover_ = true;
+	else
+		book.hardCover_ = false;
+
+    input >> book.price_;
+    getline(input, line);
+
+	getline(input, book.isbn_);
+
+	input >> book.copies_;
+	getline(input, line);
+	return input;
+}
+
+ostream& operator<< (ostream& output, const Book& book) {
+	output << "Title: " << book.title_ << endl;
+
+	for(int i = 0; i < book.authorCount_; i++) {
+		output << "Author: " << book.authors_[i] << endl;
+	}
+
+	output << "Publisher: " << book.publisher_ << endl;
+
+	output << "Year: " << book.yearPublish_ << endl;
+
+	output << "Cover: " << book.getCoverType() << endl;
+
+	output << "Price: $" << setprecision(2) << fixed << book.price_ << endl;
+
+	output << "ISBN: " << book.isbn_ << endl;
+
+	output << "Copies " << book.copies_ << endl;
+	return output;
+}
+
+string Book::getPublisher() const {
+    return publisher_;
+}
+
+string Book::getISBN() const {
+	return isbn_;
+}
+
+bool Book::getHardcover() const {
+	return hardCover_;
+}
+
+bool Book::operator== (const Book& book) const{
+	bool result = true;
+	if(authorCount_ != book.authorCount_)
+		result = false;
+	else {
+		for(int i = 0; i < authorCount_; i++) {
+				if(authors_[i] != book.authors_[i])
+					result = false;
+		}
+	}
+	if((publisher_ != book.publisher_) || (yearPublish_ != book.yearPublish_)||
+	   (hardCover_ != book.hardCover_) || (price_ != book.price_)||
+	   (isbn_ != book.isbn_) || (copies_ != book.copies_))
+		result = false;
+	return result;
+}
+
+Book* Book::operator= (const Book& book) {
+	if(&book != this) {
+		title_ = book.title_;
+		authorCount_ = book.authorCount_;
+
+		for(int i = 0; i < authorCount_; i++) {
+			authors_[i] = book.authors_[i];
+		}
+		publisher_ = book.publisher_;
+		yearPublish_ = book.yearPublish_;
+		hardCover_ = book.hardCover_;
+		price_ = book.price_;
+		isbn_ = book.isbn_;
+		copies_ = book.copies_;
+	}
+	return this;
+}
+
+bool Book::operator> (const Book& book) const{
+	if(isbn_.compare(book.getISBN()) > 0)
+		return true;
+	else
+		return false;
+}
+
+
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat HardcoverBook.h
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#ifndef HARDCOVERBOOK
+#define HARDCOVERBOOK
+
+#include "Book.h"
+
+class HardcoverBook : public Book {
+
+	public:
+		HardcoverBook();
+		virtual ~HardcoverBook();
+
+	protected:
+		virtual string getCoverType() const;
+
+};
+
+#endif /** HARDCOVERBOOK **/
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat B[KHardcoverBook.cpp
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#include "HardcoverBook.h"
+
+HardcoverBook::HardcoverBook() {
+
+}
+
+HardcoverBook:: ~HardcoverBook() {
+
+}
+
+string HardcoverBook::getCoverType() const{
+	return "Hardcover";
+}
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat PaperbackBook.h
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#ifndef PAPERBACKBOOK
+#define PAPERBACKBOOK
+
+#include "Book.h"
+
+class PaperbackBook : public Book {
+
+	public:
+		PaperbackBook();
+		virtual ~PaperbackBook();
+
+	protected:
+		virtual string getCoverType() const;
+
+};
+
+#endif /** PAPERBACKBOOK **/
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat PaperbackBook.cpp
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#include "PaperbackBook.h"
+
+PaperbackBook::PaperbackBook() {
+
+}
+
+PaperbackBook:: ~PaperbackBook() {
+
+}
+
+string PaperbackBook::getCoverType() const {
+	return "Paperback";
+}
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat Warehouse.h
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#ifndef WAREHOUSE
+
+#define WAREHOUSE
+#include <string>
+#include <fstream>
+#include "HardcoverBook.h"
+#include "PaperbackBook.h"
+#include "LinkedList.h"
+
+using namespace std;
+
+//a class named Warehouse
+class Warehouse {
+    //overloaded stream insertion operator to retrieve its attributes from the provided database
+	friend istream& operator >> (istream&, Warehouse&);
+
+	//overloaded stream extraction operator to output all the books read in
+	friend ostream& operator << (ostream&, Warehouse&);
+
+	public:
+		static const long MAX_BOOKS = 5000;  //max number of books the warehouse can hold
+
+		Warehouse();    //default constructor
+		~Warehouse();   //destructor
+
+		bool find(string , Book*);    //function to find book by isbn
+
+	protected:
+		bool createBook_(Book*);
+
+	private:
+		LinkedList<Book*> list_;         //beginning of linked list of books
+		long bookCount_;    //number of books
+};
+#endif	/** WAREHOUSE **/
+
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat Warehouse.cpp
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#include "Warehouse.h"
+#include <iostream>
+Warehouse::Warehouse() {
+	bookCount_ = 0;
+}
+
+Warehouse::~Warehouse() {
+	bookCount_ = 0;
+}
+
+istream& operator>> (istream& input, Warehouse& warehouse) {
+
+    Book* bookptr = new PaperbackBook();
+	while(input >> *bookptr) {
+        	if(warehouse.bookCount_ > warehouse.MAX_BOOKS)
+          	  break;
+		warehouse.createBook_(bookptr);
+	}
+	return input;
+}
+
+ostream& operator<< (ostream& output, Warehouse& warehouse) {
+	for(int i = 0; i < warehouse.bookCount_; i++) {
+	    Book* bookptr;
+        bookptr = warehouse.list_.data();
+		output << *bookptr << endl;
+		warehouse.list_.advance();
+	}
+	warehouse.list_.resetIterator();
+	return output;
+}
+
+bool Warehouse::find(string isbn, Book* book) {
+	for(int i =0; i < list_.length(); i++) {
+		if(list_.data()->getISBN() == isbn) {
+			*book = *list_.data();
+			list_.resetIterator();
+			return true;
+		}
+		list_.advance();
+	}
+	list_.resetIterator();
+	return false;
+}
+
+bool Warehouse::createBook_(Book* bookptr) {
+	Book* temp;
+	if(bookptr->getHardcover()) {
+		temp = new HardcoverBook();
+	} else {
+		temp = new PaperbackBook();
+	}
+	*temp = *bookptr;
+	list_.insert(temp);
+	bookCount_++;
+	return true;
+}
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat Linkedlist[K[K[K[KList.h
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#ifndef LINKEDLIST
+#define LINKEDLIST
+
+#include "Node.h"
+
+template <class T>
+class LinkedList {
+	public:
+		LinkedList();       //default constructor
+		~LinkedList();      //destructor
+
+	//Method to return the data stored within the current iterator reference
+	T data() const;
+
+	//Method to insert the new data into end of the list
+	void insert(T);
+
+	//Method to return the current list length
+	long length() const;
+
+	//Method to advance the current iterator. @return -1 if current iterator is NULL
+	int advance();
+
+	//Method to reset the iterator back to the head of the list
+	void resetIterator();
+
+	private:
+		//reference to the head of the list
+		Node<T>* head_;
+
+		//reference to the end of the list
+		Node<T>* tail_;
+
+		//iterator reference
+		Node<T>* iterator_;
+
+		//current list length
+		long length_;
+
+};
+
+#endif /** LINKEDLIST **/
+
+template <class T>
+LinkedList<T>::LinkedList() {
+	head_ = NULL;
+	iterator_ = NULL;
+	tail_ = NULL;
+	length_ = 0;
+}
+
+template <class T>
+LinkedList<T>::~LinkedList() {
+	Node<T>* temp;
+	while(head_) {
+		temp = head_;
+		head_ = head_->getNext();
+		delete temp;
+	}
+	head_ = NULL;
+	iterator_ = NULL;
+	tail_ = NULL;
+	length_ = 0;
+}
+
+template <class T>
+T LinkedList<T>::data() const {
+	return iterator_->getData();
+}
+
+template <class T>
+void LinkedList<T>::insert(T data) {
+    Node<T>* temp = new Node<T>(data, NULL);
+	if(head_ == NULL) {
+		head_ = temp;
+		tail_ = temp;
+		iterator_ = head_;
+		length_++;
+	} else {
+		tail_->setNext(temp);
+		tail_ = temp;
+		length_++;
+	}
+}
+
+template <class T>
+long LinkedList<T>::length() const {
+	return length_;
+}
+
+template <class T>
+int LinkedList<T>::advance() {
+	if(iterator_ == NULL)
+		return -1;
+	else {
+		iterator_ = iterator_->getNext();
+		return 0;
+	}
+}
+
+template <class T>
+void LinkedList<T>::resetIterator() {
+	iterator_ = head_;
+}
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat Node.h
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#ifndef NODE
+#define NODE
+
+#include <cstddef>
+
+template <class T>
+class Node {
+	public:
+		Node();             //default constructor
+		Node(T, Node*);     //constructor to create a Node with T data and a next Node reference
+		~Node();            //destructor
+
+		//Method to obtain the internal data
+		T getData() const;
+
+		//Method to set the internal data
+		void setData(T);
+
+		//Method to obtain the next Node reference
+		Node* getNext() const;
+
+		//Method to set the next Node reference
+		void setNext(Node*);
+
+	private:
+		//the internal data
+		T data_;
+
+		//the next node reference
+		Node* next_;
+
+};
+
+#endif /** NODE **/
+
+template <class T>
+Node<T>::Node() : next_(NULL) {}
+
+template <class T>
+Node<T>::Node(T data, Node* next) : data_(data), next_(next) {}
+
+template <class T>
+Node<T>::~Node() {
+	this->next_ = NULL;
+}
+
+template <class T>
+T Node<T>::getData() const {
+	return this->data_;
+}
+
+template <class T>
+void Node<T>::setData(T data) {
+	this->data_ = data;
+}
+
+template <class T>
+Node<T>* Node<T>::getNext() const {
+	return this->next_;
+}
+
+template <class T>
+void Node<T>::setNext(Node* next) {
+	this->next_ = next;
+}
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat proj04.cpp
+/* Richard Pham
+** CS256-01, Fall 2017
+** Project #4
+** Description:
+** 	Continue from Project 3. Convert the existing Book class into an abstract base class with a
+**  public pure virtual method that returns a string for the cover type. Define two concrete derived
+**  classes from the Book class, which both implement the 'getCoverType' method from the base class.
+**  Modify the Warehouse class by adding a 'createBook_' method that reads in one set of book data from
+**  the input data stream and creates an instance of HardcoverBook or PaperbackBook depending on the input
+**  data. The program shall be able to process the same data format and produce the same outputs as in
+**  Project 3.
+*/
+
+#include <iostream>
+#include "Warehouse.h"
+
+int main(int argc, char** argv) {
+
+    //program requires two input files
+	if(argc != 3) {
+		cout << "Usage: proj03 <data file> <search list>\n";
+		return -1;
+	}
+
+	ifstream dataFile;
+	dataFile.open(argv[1]);
+
+	ifstream searchFile;
+	searchFile.open(argv[2]);
+
+    //check if data file is valid
+	if(dataFile.fail()) {
+		cout << "Unable to read file: " << argv[1] << endl;
+		return -1;
+	}
+
+    //check if search file is valid
+	if(searchFile.fail()) {
+		cout << "Unable to read file: " << argv[2] << endl;
+		return -1;
+	}
+
+	Warehouse ware;
+	dataFile >> ware;
+
+    cout << "---------- List of Books ----------\n" << endl;
+	cout << ware << endl;
+	cout << "---------- Inventory Search by ISBN ----------\n";
+
+	string isbn;
+	Book* book = new PaperbackBook();
+	while(getline(searchFile,isbn)) {
+		cout << endl << "ISBN: " << isbn << endl;
+		if(ware.find(isbn, book)) {
+			cout << " -- FOUND:\n";
+            cout << *book;
+		} else {
+			cout << " -- NOT FOUND!!\n";
+		}
+	}
+	delete book;
+    dataFile.close();
+    searchFile.close();
+}
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat sear[K[K[K[Kbook.dat
+Programming Ruby
+2
+David Thomas
+Andrew Hunt
+Addison-Wesley
+2001
+0
+42.95
+0-201-71089-7
+123
+Problem Solving with C++ - The Object of Programming
+1
+Walter Savitch
+Addison Wesley Longman, Inc.
+2001
+0
+74.00
+0-201-70390-4
+325
+Fundamentals of the Human Mosaic
+4
+Terry G. Jordan-Bychkov
+Mona Domosh
+Roderick P. Neumann
+Patricia L. Price
+W.H. Freeman and Company
+2012
+1
+59.95
+0-321-43903-5
+2391
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m cat search.dat 
+0-932-63343-9
+1-234-56789-0
+0-201-60474-7
+0-201-71089-7
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m ,/proj[K[K[K[K[K[K./proj04 se[K[Kbook.dat search.dat
+---------- List of Books ----------
+
+Title: Programming Ruby
+Author: David Thomas
+Author: Andrew Hunt
+Publisher: Addison-Wesley
+Year: 2001
+Cover: Paperback
+Price: $42.95
+ISBN: 0-201-71089-7
+Copies 123
+
+Title: Problem Solving with C++ - The Object of Programming
+Author: Walter Savitch
+Publisher: Addison Wesley Longman, Inc.
+Year: 2001
+Cover: Paperback
+Price: $74.00
+ISBN: 0-201-70390-4
+Copies 325
+
+Title: Fundamentals of the Human Mosaic
+Author: Terry G. Jordan-Bychkov
+Author: Mona Domosh
+Author: Roderick P. Neumann
+Author: Patricia L. Price
+Publisher: W.H. Freeman and Company
+Year: 2012
+Cover: Hardcover
+Price: $59.95
+ISBN: 0-321-43903-5
+Copies 2391
+
+
+---------- Inventory Search by ISBN ----------
+
+ISBN: 0-932-63343-9
+ -- NOT FOUND!!
+
+ISBN: 1-234-56789-0
+ -- NOT FOUND!!
+
+ISBN: 0-201-60474-7
+ -- NOT FOUND!!
+
+ISBN: 0-201-71089-7
+ -- FOUND:
+Title: Programming Ruby
+Author: David Thomas
+Author: Andrew Hunt
+Publisher: Addison-Wesley
+Year: 2001
+Cover: Paperback
+Price: $42.95
+ISBN: 0-201-71089-7
+Copies 123
+]0;rhpham@abbott:~/cs256/proj4[01;32mrhpham@abbott[01;34m ~/cs256/proj4 $[00m exit
+exit
+
+Script done on Mon 27 Nov 2017 11:54:24 PM PST
